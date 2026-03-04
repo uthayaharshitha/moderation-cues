@@ -1,0 +1,1653 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+  <title>LOOM // MODERATION DEMO</title>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <style>
+    /* ═══════ TOKENS ═══════ */
+    :root {
+      --bg: #0f0a1a;
+      --bg2: #17102a;
+      --bg3: #1f1535;
+      --bg4: #271c40;
+      --border: #2e1f55;
+      --border2: #3d2a6b;
+      --or: #e8640a;
+      --or2: #ff8c00;
+      --red: #ff1a00;
+      --red2: #8b0000;
+      --blue: #4a9eff;
+      --blue2: #2266cc;
+      --green: #39e014;
+      --dim: #7060a0;
+      --dim2: #5a4a80;
+      --white: #e4dff5;
+      --mono: 'Share Tech Mono', monospace;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    html,
+    body {
+      width: 100%;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--white);
+      font-family: var(--mono);
+      overflow-x: hidden;
+      -webkit-font-smoothing: none
+    }
+
+    /* CRT overlay */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 9000;
+      pointer-events: none;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 0, 0, 0.10) 2px, rgba(0, 0, 0, 0.10) 3px)
+    }
+
+    /* ═══════ LAYOUT ═══════ */
+    .app {
+      max-width: 460px;
+      margin: 0 auto;
+      padding-bottom: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh
+    }
+
+    /* ═══════ HEADER ═══════ */
+    .hdr {
+      background: var(--bg2);
+      border-bottom: 2px solid var(--border2);
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .hdr-left {
+      display: flex;
+      flex-direction: column;
+      gap: 1px
+    }
+
+    .logo {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--or);
+      letter-spacing: 5px;
+      text-shadow: 0 0 10px var(--or), 0 0 20px rgba(232, 100, 10, .4)
+    }
+
+    .logo-sub {
+      font-size: 7px;
+      color: var(--dim);
+      letter-spacing: 2px;
+      text-transform: uppercase
+    }
+
+    /* User chip — avatar + mini-building side by side */
+    .user-chip {
+      display: flex;
+      align-items: flex-end;
+      gap: 6px
+    }
+
+    .u-avatar {
+      width: 36px;
+      height: 36px;
+      background: var(--bg3);
+      border: 1px solid var(--or);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--or);
+      flex-shrink: 0;
+      cursor: pointer;
+      transition: border-color .3s;
+    }
+
+    .u-avatar.banned {
+      border-color: var(--red);
+      color: var(--red);
+      animation: pulse-red 1s step-end infinite
+    }
+
+    @keyframes pulse-red {
+
+      0%,
+      100% {
+        box-shadow: 0 0 0 1px var(--red)
+      }
+
+      50% {
+        box-shadow: none
+      }
+    }
+
+    /* Mini building beside avatar */
+    .mini-bld {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1px;
+      padding-bottom: 2px;
+      position: relative
+    }
+
+    .mb-floor {
+      background: linear-gradient(90deg, #555, #aaa, #555);
+      border: 1px solid #333;
+      transition: all .6s;
+    }
+
+    .mb-rubble {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1px;
+      width: 26px;
+      opacity: 0;
+      transition: opacity .5s;
+    }
+
+    .mb-rubble.show {
+      opacity: 1
+    }
+
+    .mb-piece {
+      background: #555;
+      border: 1px solid #333;
+      animation: rubble-in .4s ease both
+    }
+
+    @keyframes rubble-in {
+      from {
+        transform: translateY(-4px) rotate(0);
+        opacity: 0
+      }
+
+      to {
+        opacity: 1
+      }
+    }
+
+    .mb-crack {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(0, 0, 0, .3) 4px, rgba(0, 0, 0, .3) 5px);
+      opacity: 0;
+      transition: opacity .5s;
+    }
+
+    .mb-crack.show {
+      opacity: 1
+    }
+
+    .bld-label {
+      font-size: 6px;
+      color: var(--dim);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-top: 2px
+    }
+
+    /* Suspended banner */
+    .suspended-bar {
+      background: var(--red2);
+      border: 1px solid var(--red);
+      padding: 5px 12px;
+      text-align: center;
+      font-size: 9px;
+      color: var(--red);
+      letter-spacing: 2px;
+      display: none;
+      flex-shrink: 0;
+      animation: flicker .4s step-end infinite;
+    }
+
+    .suspended-bar.show {
+      display: block
+    }
+
+    @keyframes flicker {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: .7
+      }
+    }
+
+    /* Scrolling ticker */
+    .ticker {
+      background: rgba(232, 100, 10, .07);
+      border-bottom: 1px solid rgba(232, 100, 10, .18);
+      padding: 4px 0;
+      overflow: hidden;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .ticker-inner {
+      display: inline-block;
+      font-size: 7px;
+      color: var(--or);
+      letter-spacing: 2px;
+      animation: scroll-x 22s linear infinite
+    }
+
+    @keyframes scroll-x {
+      0% {
+        transform: translateX(100%)
+      }
+
+      100% {
+        transform: translateX(-100%)
+      }
+    }
+
+    /* ═══════ TABS ═══════ */
+    .tabs {
+      display: flex;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border2);
+      flex-shrink: 0
+    }
+
+    .tab {
+      flex: 1;
+      padding: 9px 0;
+      text-align: center;
+      font-size: 9px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--dim);
+      cursor: pointer;
+      border-right: 1px solid var(--border);
+      transition: all .15s;
+      font-family: var(--mono);
+      background: transparent;
+      border-top: none;
+      border-left: none;
+      border-bottom: none;
+    }
+
+    .tab:last-child {
+      border-right: none
+    }
+
+    .tab.active {
+      color: var(--or);
+      background: rgba(232, 100, 10, .1);
+      border-bottom: 2px solid var(--or)
+    }
+
+    /* ═══════ SCREENS ═══════ */
+    .screen {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      overflow: hidden
+    }
+
+    .screen.active {
+      display: flex
+    }
+
+    /* ════════════════════════════
+   FORUM SCREEN
+════════════════════════════ */
+    .forum-meta {
+      padding: 6px 12px;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      font-size: 7px;
+      color: var(--dim);
+      letter-spacing: 2px;
+      flex-shrink: 0;
+    }
+
+    .forum-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0;
+      display: flex;
+      flex-direction: column
+    }
+
+    .forum-scroll::-webkit-scrollbar {
+      width: 4px
+    }
+
+    .forum-scroll::-webkit-scrollbar-track {
+      background: var(--bg)
+    }
+
+    .forum-scroll::-webkit-scrollbar-thumb {
+      background: var(--border2)
+    }
+
+    /* Section divider */
+    .forum-section-label {
+      padding: 8px 12px;
+      font-size: 7px;
+      color: var(--dim);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .forum-section-label::before,
+    .forum-section-label::after {
+      content: '·····';
+      opacity: .4
+    }
+
+    /* Post card */
+    .post-card {
+      display: flex;
+      gap: 8px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg2);
+      position: relative;
+      transition: all .8s cubic-bezier(.22, .61, .36, 1);
+      flex-shrink: 0;
+    }
+
+    .post-card.bad {
+      opacity: .25;
+      filter: blur(3.5px);
+      background: rgba(255, 26, 0, .04);
+      border-color: rgba(255, 26, 0, .2);
+      order: 999;
+      /* push to bottom in flex */
+    }
+
+    .post-card.going-bad {
+      animation: blur-sink .8s cubic-bezier(.22, .61, .36, 1) forwards
+    }
+
+    @keyframes blur-sink {
+      0% {
+        opacity: 1;
+        filter: blur(0);
+        transform: translateY(0)
+      }
+
+      60% {
+        opacity: .4;
+        filter: blur(2px);
+        transform: translateY(8px)
+      }
+
+      100% {
+        opacity: .25;
+        filter: blur(3.5px);
+        transform: translateY(0)
+      }
+    }
+
+    .p-avatar {
+      width: 32px;
+      height: 32px;
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--or);
+      flex-shrink: 0;
+    }
+
+    .post-card.bad .p-avatar {
+      border-color: var(--red2);
+      background: rgba(139, 0, 0, .3)
+    }
+
+    .p-body {
+      flex: 1;
+      min-width: 0
+    }
+
+    .p-top {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 3px
+    }
+
+    .p-name {
+      font-size: 9px;
+      color: var(--or);
+      font-weight: 700
+    }
+
+    .post-card.bad .p-name {
+      color: var(--red)
+    }
+
+    .p-time {
+      font-size: 7px;
+      color: var(--dim)
+    }
+
+    .p-text {
+      font-size: 10px;
+      line-height: 1.6;
+      color: var(--white)
+    }
+
+    .post-card.bad .p-text {
+      color: var(--red)
+    }
+
+    .p-acts {
+      display: flex;
+      gap: 6px;
+      margin-top: 5px
+    }
+
+    .p-btn {
+      font-size: 7px;
+      color: var(--dim);
+      border: 1px solid var(--border);
+      padding: 2px 7px;
+      cursor: pointer;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      background: transparent;
+      font-family: var(--mono);
+      transition: all .15s;
+    }
+
+    .p-btn:hover {
+      color: var(--or);
+      border-color: var(--or)
+    }
+
+    .p-btn.liked {
+      color: var(--or);
+      border-color: var(--or)
+    }
+
+    .gravity-tag {
+      position: absolute;
+      top: 6px;
+      right: 8px;
+      font-size: 7px;
+      color: var(--red);
+      letter-spacing: 1px;
+      opacity: 0;
+      transition: opacity .5s;
+    }
+
+    .post-card.bad .gravity-tag {
+      opacity: 1
+    }
+
+    .cue-label {
+      position: absolute;
+      bottom: 6px;
+      right: 8px;
+      font-size: 7px;
+      color: var(--red);
+      border: 1px solid var(--red2);
+      padding: 1px 5px;
+      letter-spacing: 1px;
+      opacity: 0;
+      transition: opacity .5s;
+    }
+
+    .post-card.bad .cue-label {
+      opacity: 1
+    }
+
+    /* Forum reply box */
+    .forum-reply-wrap {
+      border-top: 2px solid var(--border2);
+      background: var(--bg2);
+      padding: 10px 12px;
+      flex-shrink: 0;
+    }
+
+    .forum-reply-top {
+      font-size: 7px;
+      color: var(--dim);
+      letter-spacing: 2px;
+      margin-bottom: 6px;
+      text-transform: uppercase
+    }
+
+    .forum-reply-row {
+      display: flex;
+      gap: 6px;
+      align-items: flex-start
+    }
+
+    .forum-reply-input {
+      flex: 1;
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      padding: 7px 9px;
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--white);
+      resize: none;
+      outline: none;
+      caret-color: var(--or);
+      min-height: 40px;
+      transition: border-color .3s;
+    }
+
+    .forum-reply-input::placeholder {
+      color: var(--dim2)
+    }
+
+    .forum-reply-input.warn {
+      border-color: var(--red);
+      box-shadow: 0 0 0 1px var(--red)
+    }
+
+    .forum-post-btn {
+      font-family: var(--mono);
+      font-size: 8px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--or);
+      border: 1px solid var(--or);
+      background: transparent;
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: all .15s;
+      white-space: nowrap;
+    }
+
+    .forum-post-btn:active {
+      background: var(--or);
+      color: #000
+    }
+
+    .forum-warn-text {
+      font-size: 7px;
+      color: var(--red);
+      letter-spacing: 1px;
+      margin-top: 4px;
+      min-height: 12px;
+      transition: opacity .3s
+    }
+
+    /* ════════════════════════════
+   CHAT SCREEN
+════════════════════════════ */
+    /* Eye Tracker — sits ABOVE the input */
+    .eye-tracker {
+      padding: 10px 12px 6px;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .eye-tracker-inner {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      position: relative;
+      overflow: hidden;
+      transition: border-color .3s, box-shadow .3s;
+    }
+
+    .eye-tracker-inner.alert {
+      border-color: var(--red);
+      box-shadow: 0 0 0 1px var(--red)
+    }
+
+    .eye-svg-wrap {
+      position: relative;
+      flex-shrink: 0;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center
+    }
+
+    .eye-svg-wrap svg {
+      width: 32px;
+      height: 32px
+    }
+
+    .eye-svg-wrap .iris {
+      fill: #4a9eff;
+      transition: fill .3s
+    }
+
+    .eye-svg-wrap .pupil {
+      fill: #05070f;
+      transition: transform .4s
+    }
+
+    .eye-svg-wrap.red .iris {
+      fill: var(--red)
+    }
+
+    .eye-svg-wrap.shake {
+      animation: eyeshake .07s infinite
+    }
+
+    @keyframes eyeshake {
+
+      0%,
+      100% {
+        transform: translate(0, 0)
+      }
+
+      20% {
+        transform: translate(-3px, 1px)
+      }
+
+      40% {
+        transform: translate(3px, -2px)
+      }
+
+      60% {
+        transform: translate(-2px, -1px)
+      }
+
+      80% {
+        transform: translate(1px, 2px)
+      }
+    }
+
+    /* Floating "being watched" bubble */
+    .watch-bubble {
+      position: relative;
+      flex: 1;
+    }
+
+    .watch-count {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--blue);
+      letter-spacing: 1px;
+      line-height: 1;
+      text-shadow: 0 0 8px var(--blue), 0 0 16px rgba(74, 158, 255, .4);
+      animation: float-y 2.4s ease-in-out infinite;
+    }
+
+    .watch-count.red {
+      color: var(--red);
+      text-shadow: 0 0 8px var(--red), 0 0 16px rgba(255, 26, 0, .4);
+      animation: none
+    }
+
+    @keyframes float-y {
+
+      0%,
+      100% {
+        transform: translateY(0)
+      }
+
+      50% {
+        transform: translateY(-3px)
+      }
+    }
+
+    .watch-sub {
+      font-size: 8px;
+      color: var(--dim);
+      letter-spacing: 1px;
+      margin-top: 2px;
+      transition: color .3s
+    }
+
+    .watch-sub.red {
+      color: var(--red)
+    }
+
+    /* Toxicity bar inside eye tracker */
+    .tox-bar {
+      height: 2px;
+      background: var(--bg);
+      overflow: hidden;
+      margin-top: 6px;
+      border: none
+    }
+
+    .tox-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--blue);
+      transition: width .35s, background .35s
+    }
+
+    /* Chat messages */
+    .chat-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px
+    }
+
+    .chat-scroll::-webkit-scrollbar {
+      width: 4px
+    }
+
+    .chat-scroll::-webkit-scrollbar-thumb {
+      background: var(--border2)
+    }
+
+    .chat-msg {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start
+    }
+
+    .chat-msg.self {
+      flex-direction: row-reverse
+    }
+
+    .c-avatar {
+      width: 28px;
+      height: 28px;
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--or);
+      flex-shrink: 0;
+    }
+
+    .c-bubble {
+      max-width: 240px;
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      padding: 6px 9px;
+      font-size: 10px;
+      line-height: 1.55;
+      color: var(--white);
+    }
+
+    .chat-msg.self .c-bubble {
+      border-color: var(--or);
+      background: rgba(232, 100, 10, .08)
+    }
+
+    .c-name {
+      font-size: 7px;
+      color: var(--dim);
+      margin-bottom: 2px;
+      letter-spacing: 1px
+    }
+
+    .chat-msg.self .c-name {
+      text-align: right;
+      color: var(--or)
+    }
+
+    /* Chat bad message */
+    .chat-msg.bad-msg .c-bubble {
+      border-color: var(--red2);
+      color: rgba(255, 255, 255, .4);
+      animation: chat-warn .5s ease
+    }
+
+    @keyframes chat-warn {
+      0% {
+        border-color: var(--red);
+        box-shadow: 0 0 8px var(--red)
+      }
+
+      100% {
+        border-color: var(--red2);
+        box-shadow: none
+      }
+    }
+
+    .chat-msg.bad-msg .c-name {
+      color: var(--red)
+    }
+
+    /* Chat input row */
+    .chat-input-wrap {
+      padding: 10px 12px;
+      background: var(--bg2);
+      border-top: 2px solid var(--border2);
+      flex-shrink: 0;
+    }
+
+    .chat-row {
+      display: flex;
+      gap: 6px;
+      align-items: flex-start
+    }
+
+    .chat-input {
+      flex: 1;
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      padding: 8px 9px;
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--white);
+      resize: none;
+      outline: none;
+      caret-color: var(--or);
+      min-height: 38px;
+      transition: border-color .3s;
+    }
+
+    .chat-input::placeholder {
+      color: var(--dim2)
+    }
+
+    .chat-input.warn {
+      border-color: var(--red)
+    }
+
+    .chat-send {
+      font-family: var(--mono);
+      font-size: 8px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--or);
+      border: 1px solid var(--or);
+      background: transparent;
+      padding: 9px 12px;
+      cursor: pointer;
+      transition: all .15s;
+      white-space: nowrap;
+    }
+
+    .chat-send:active {
+      background: var(--or);
+      color: #000
+    }
+
+    .chat-warn-text {
+      font-size: 7px;
+      color: var(--red);
+      letter-spacing: 1px;
+      margin-top: 4px;
+      min-height: 10px
+    }
+
+    /* ═══════ CUE LEGEND (Demo helper) ═══════ */
+    .cue-legend {
+      padding: 6px 12px;
+      background: rgba(46, 31, 85, .6);
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      flex-shrink: 0;
+    }
+
+    .cue-item {
+      font-size: 7px;
+      letter-spacing: 1px;
+      color: var(--dim);
+      display: flex;
+      align-items: center;
+      gap: 4px
+    }
+
+    .cue-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%
+    }
+
+    /* ═══════ SUSPEND MODAL ═══════ */
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 8000;
+      background: rgba(5, 3, 15, .95);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .modal.show {
+      display: flex
+    }
+
+    .modal-box {
+      width: 100%;
+      max-width: 320px;
+      background: var(--bg2);
+      border: 2px solid var(--red);
+      padding: 24px;
+      text-align: center;
+      animation: glitch-in .4s ease;
+    }
+
+    @keyframes glitch-in {
+      0% {
+        transform: translate(4px, -4px) skewX(3deg);
+        opacity: 0
+      }
+
+      100% {
+        transform: none;
+        opacity: 1
+      }
+    }
+
+    .modal-skull {
+      font-size: 40px;
+      margin-bottom: 10px
+    }
+
+    .modal-title {
+      font-size: 15px;
+      color: var(--red);
+      letter-spacing: 3px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      text-shadow: 1px 0 0 rgba(255, 26, 0, .6), -1px 0 0 rgba(0, 255, 255, .4)
+    }
+
+    .modal-body {
+      font-size: 9px;
+      color: var(--dim);
+      line-height: 1.8;
+      margin-bottom: 16px
+    }
+
+    .modal-code {
+      font-size: 8px;
+      color: var(--red);
+      border: 1px solid var(--red2);
+      background: rgba(255, 26, 0, .06);
+      padding: 6px;
+      margin-bottom: 16px;
+      letter-spacing: 1px
+    }
+
+    .modal-btn {
+      font-family: var(--mono);
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--red);
+      border: 1px solid var(--red);
+      background: transparent;
+      padding: 9px 20px;
+      cursor: pointer;
+      width: 100%;
+      transition: all .15s;
+    }
+
+    .modal-btn:active {
+      background: var(--red);
+      color: #000
+    }
+
+    /* ═══════ DEMO CONTROLS ═══════ */
+    .demo-bar {
+      padding: 6px 12px;
+      background: rgba(39, 28, 64, .8);
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+      flex-shrink: 0;
+    }
+
+    .demo-label {
+      font-size: 7px;
+      color: var(--dim);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-right: 2px
+    }
+
+    .demo-btn {
+      font-family: var(--mono);
+      font-size: 7px;
+      color: var(--white);
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      padding: 3px 8px;
+      cursor: pointer;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      transition: all .15s;
+      white-space: nowrap;
+    }
+
+    .demo-btn:hover {
+      border-color: var(--or);
+      color: var(--or)
+    }
+
+    .demo-btn.danger:hover {
+      border-color: var(--red);
+      color: var(--red)
+    }
+
+    /* scrollbar for whole page */
+    ::-webkit-scrollbar {
+      width: 4px
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg)
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border2)
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Suspend Modal -->
+  <div class="modal" id="suspendModal">
+    <div class="modal-box">
+      <div class="modal-skull">💀</div>
+      <div class="modal-title">ACCOUNT SUSPENDED</div>
+      <div class="modal-code">ERR::IDENTITY_COLLAPSE // STRUCTURE_INTEGRITY=0</div>
+      <div class="modal-body">Your monument has crumbled to rubble.<br>Community substrate connection
+        severed.<br>Persistent violations logged.</div>
+      <button class="modal-btn" onclick="resetAccount()">[ SUBMIT APPEAL — RESET DEMO ]</button>
+    </div>
+  </div>
+
+  <div class="app">
+
+    <!-- HEADER -->
+    <header class="hdr">
+      <div class="hdr-left">
+        <div class="logo">LOOM</div>
+        <div class="logo-sub">// moderation cue demo</div>
+      </div>
+
+      <!-- User chip: avatar + building side by side -->
+      <div class="user-chip">
+        <div class="mini-bld" id="miniBld" title="Account integrity">
+          <div class="mb-crack" id="mbCrack"></div>
+          <div class="mb-floor" id="mf4" style="width:22px;height:5px"></div>
+          <div class="mb-floor" id="mf3" style="width:24px;height:5px"></div>
+          <div class="mb-floor" id="mf2" style="width:26px;height:5px"></div>
+          <div class="mb-floor" id="mf1" style="width:28px;height:5px"></div>
+          <div class="mb-rubble" id="mbRubble"></div>
+          <div class="bld-label" id="bldLabel">INTEGRITY</div>
+        </div>
+        <div class="u-avatar" id="uAvatar" title="Your profile">Y</div>
+      </div>
+    </header><!-- /header -->
+
+    <!-- Suspended bar -->
+    <div class="suspended-bar" id="suspendedBar">⛔ ACCOUNT SUSPENDED — POSTING DISABLED</div>
+
+    <!-- Ticker -->
+    <div class="ticker"><span class="ticker-inner">LOOM INTEGRITY MONITORING ACTIVE &nbsp;·&nbsp; SOCIAL WEIGHT ENABLED
+        &nbsp;·&nbsp; 76 OBSERVERS CONNECTED &nbsp;·&nbsp; ANOMALY DETECTION v3.1 &nbsp;·&nbsp; CUE SYSTEM ONLINE</span>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" id="tabForum" onclick="switchTab('forum')">⬡ FORUM</button>
+      <button class="tab" id="tabChat" onclick="switchTab('chat')">◈ CHATBOX</button>
+    </div>
+
+    <!-- ══════ FORUM SCREEN ══════ -->
+    <div class="screen active" id="screenForum">
+
+      <div class="forum-meta">MEMORY_CARD_01 › THREADS &nbsp;·&nbsp; NODE_ID: 8821-X &nbsp;·&nbsp; <span
+          id="forumCount">8</span> POSTS</div>
+
+      <div class="forum-scroll" id="forumScroll">
+        <div class="forum-section-label">PRIORITY RESONANCE POOL</div>
+        <!-- Posts injected by JS -->
+        <div id="postList" style="display:flex;flex-direction:column"></div>
+      </div>
+
+      <!-- Reply box -->
+      <div class="forum-reply-wrap">
+        <div class="forum-reply-top">// POST REPLY</div>
+        <div class="forum-reply-row">
+          <textarea class="forum-reply-input" id="forumInput" placeholder="Type your reply…" rows="2"
+            oninput="onForumInput(this.value)"></textarea>
+          <button class="forum-post-btn" onclick="postForumReply()">POST</button>
+        </div>
+        <div class="forum-warn-text" id="forumWarn"></div>
+      </div>
+
+      <!-- Demo controls -->
+      <div class="demo-bar">
+        <span class="demo-label">DEMO:</span>
+        <button class="demo-btn" onclick="demoGoodPost()">+ Good Post</button>
+        <button class="demo-btn danger" onclick="demoBadPost()">⚠ Bad Post</button>
+        <button class="demo-btn danger" onclick="addStrike()">⬇ Strike</button>
+        <button class="demo-btn" onclick="removeStrike()">⬆ Restore</button>
+      </div>
+
+    </div><!-- /forum -->
+
+    <!-- ══════ CHAT SCREEN ══════ -->
+    <div class="screen" id="screenChat">
+
+      <!-- CUE 1: Eye tracker above input -->
+      <div class="eye-tracker">
+        <div class="eye-tracker-inner" id="eyeTrackerInner">
+          <!-- Eye -->
+          <div class="eye-svg-wrap" id="eyeWrap">
+            <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <ellipse cx="18" cy="18" rx="15" ry="9" stroke="#2e1f55" stroke-width="2" />
+              <circle cx="18" cy="18" r="6" class="iris" />
+              <circle cx="18" cy="18" r="2.5" class="pupil" />
+              <ellipse cx="18" cy="18" rx="15" ry="9" stroke="#1a1040" stroke-width="1" opacity=".6" />
+            </svg>
+          </div>
+          <!-- Watch count bubble -->
+          <div class="watch-bubble">
+            <div class="watch-count" id="watchCount">76 PEOPLE</div>
+            <div class="watch-sub" id="watchSub">are watching this channel</div>
+          </div>
+        </div>
+        <div class="tox-bar">
+          <div class="tox-fill" id="toxFill"></div>
+        </div>
+      </div>
+
+      <div class="chat-scroll" id="chatScroll">
+        <!-- Seed messages injected by JS -->
+      </div>
+
+      <div class="chat-input-wrap">
+        <div class="chat-row">
+          <textarea class="chat-input" id="chatInput" placeholder="TYPE_MESSAGE_HERE_" rows="1"
+            oninput="onChatInput(this.value)"></textarea>
+          <button class="chat-send" onclick="sendChat()">SEND</button>
+        </div>
+        <div class="chat-warn-text" id="chatWarn"></div>
+      </div>
+
+      <!-- Demo controls -->
+      <div class="demo-bar">
+        <span class="demo-label">DEMO:</span>
+        <button class="demo-btn" onclick="seedGoodChat()">+ Good</button>
+        <button class="demo-btn danger" onclick="seedBadChat()">⚠ Bad</button>
+        <button class="demo-btn danger" onclick="addStrike()">⬇ Strike</button>
+        <button class="demo-btn" onclick="removeStrike()">⬆ Restore</button>
+      </div>
+
+    </div><!-- /chat -->
+
+  </div><!-- /app -->
+
+  <script>
+    /* ══════════════════════════════════════════════
+       BAD WORD / PROFANITY LIST
+    ══════════════════════════════════════════════ */
+    const BAD_WORDS = [
+      'hate', 'stupid', 'idiot', 'kill', 'die', 'ugly', 'trash', 'worthless', 'loser',
+      'dumb', 'moron', 'shut up', 'scam', 'fake', 'liar', 'garbage', 'awful', 'terrible',
+      'worst', 'pathetic', 'disgust', 'disgusting', 'idiot', 'jerk', 'crap', 'damn',
+      'hell', 'suck', 'sucks', 'wtf', 'stfu', 'gtfo', 'retard', 'freak', 'creep',
+      'useless', 'failure', 'weak', 'clown', 'toxic', 'horrible', 'disgusting',
+      'ruin', 'ruined', 'destroy', 'attack', 'threat', 'burn', 'rot', 'decay',
+      'architecture is pathetic', 'waste of processing', 'hollow code',
+      'tear this server', 'delete everything', 'memories are errors'
+    ];
+
+    function isBad(text) {
+      const t = text.toLowerCase();
+      return BAD_WORDS.some(w => t.includes(w));
+    }
+
+    /* ══════════════════════════════════════════════
+       ACCOUNT STATE (CUE 2 — Building)
+    ══════════════════════════════════════════════ */
+    let strikes = 0;
+    const MAX_STRIKES = 5;
+    let suspended = false;
+    const FLOORS = ['mf1', 'mf2', 'mf3', 'mf4'];
+
+    function addStrike() {
+      if (suspended || strikes >= MAX_STRIKES) return;
+      strikes++;
+      updateBuilding();
+      if (strikes >= MAX_STRIKES) triggerSuspend();
+    }
+    function removeStrike() {
+      if (strikes <= 0) return;
+      suspended = false;
+      if (strikes > 0) strikes--;
+      document.getElementById('suspendModal').classList.remove('show');
+      document.getElementById('suspendedBar').classList.remove('show');
+      document.getElementById('uAvatar').classList.remove('banned');
+      updateBuilding();
+    }
+    function resetAccount() {
+      strikes = 0; suspended = false;
+      document.getElementById('suspendModal').classList.remove('show');
+      document.getElementById('suspendedBar').classList.remove('show');
+      document.getElementById('uAvatar').classList.remove('banned');
+      updateBuilding();
+    }
+
+    function updateBuilding() {
+      const floors = FLOORS.slice(0, MAX_STRIKES - strikes); // floors remaining
+      FLOORS.forEach((id, i) => {
+        const f = document.getElementById(id);
+        if (!f) return;
+        const visible = i < (MAX_STRIKES - strikes);
+        f.style.opacity = visible ? 1 : 0;
+        f.style.transform = visible ? 'none' : 'scaleY(0)';
+      });
+      // Show crack overlay at high damage
+      const crack = document.getElementById('mbCrack');
+      crack.classList.toggle('show', strikes >= 2);
+      // Rubble
+      const rubble = document.getElementById('mbRubble');
+      if (strikes >= 3) {
+        rubble.classList.add('show');
+        if (rubble.children.length === 0) {
+          for (let i = 0; i < 6; i++) {
+            const p = document.createElement('div');
+            p.className = 'mb-piece';
+            const s = Math.random() * 5 + 3;
+            p.style.cssText = `width:${s}px;height:${s * 0.4}px;animation-delay:${(i * .07).toFixed(2)}s;transform:rotate(${Math.random() * 30 - 15}deg)`;
+            rubble.appendChild(p);
+          }
+        }
+      } else {
+        rubble.classList.remove('show');
+        rubble.innerHTML = '';
+      }
+      // Label
+      const pct = Math.round(((MAX_STRIKES - strikes) / MAX_STRIKES) * 100);
+      document.getElementById('bldLabel').textContent = strikes === 0 ? 'INTEGRITY' : `${pct}%`;
+      document.getElementById('bldLabel').style.color = strikes >= 4 ? 'var(--red)' : strikes >= 2 ? 'var(--or)' : 'var(--dim)';
+    }
+
+    function triggerSuspend() {
+      suspended = true;
+      document.getElementById('uAvatar').classList.add('banned');
+      document.getElementById('suspendedBar').classList.add('show');
+      // Collapse all floors
+      FLOORS.forEach(id => {
+        const f = document.getElementById(id);
+        if (f) { f.style.opacity = 0; f.style.transform = 'scaleY(0)' }
+      });
+      document.getElementById('mbCrack').classList.add('show');
+      const rubble = document.getElementById('mbRubble');
+      rubble.classList.add('show');
+      if (rubble.children.length === 0) {
+        for (let i = 0; i < 10; i++) {
+          const p = document.createElement('div');
+          p.className = 'mb-piece';
+          const s = Math.random() * 6 + 2;
+          p.style.cssText = `width:${s}px;height:${s * 0.4}px;animation-delay:${(i * .05).toFixed(2)}s;transform:rotate(${Math.random() * 60 - 30}deg)`;
+          rubble.appendChild(p);
+        }
+      }
+      document.getElementById('bldLabel').textContent = 'SUSPENDED';
+      document.getElementById('bldLabel').style.color = 'var(--red)';
+      setTimeout(() => document.getElementById('suspendModal').classList.add('show'), 800);
+    }
+
+    /* ══════════════════════════════════════════════
+       TAB SWITCH
+    ══════════════════════════════════════════════ */
+    function switchTab(tab) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.getElementById('screen' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+      document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+    }
+
+    /* ══════════════════════════════════════════════
+       FORUM — POSTS
+    ══════════════════════════════════════════════ */
+    const SEED_POSTS = [
+      {
+        user: 'Wanderer_88', letter: 'W', time: '2h ago', likes: 42, replies: 10,
+        text: 'Does anyone else feel like the fog in the outer courtyard is getting thicker? I tried to reach the lower gate but the stones felt... different today.'
+      },
+      {
+        user: 'GateKeeper_V3', letter: 'G', time: '1h ago', likes: 18, replies: 5,
+        text: "It's just the seasonal cycle rendering. Don't go near the brickwork if it starts glowing green."
+      },
+      {
+        user: 'Lost_S0ul', letter: 'L', time: '45m ago', likes: 31, replies: 7,
+        text: 'The observatory tower signal just looped for the third time. Something upstream is corrupted.'
+      },
+      {
+        user: 'relay_x', letter: 'R', time: '30m ago', likes: 22, replies: 3,
+        text: 'Great discussion today, learned a lot from everyone here. Keep the thread alive.'
+      },
+    ];
+
+    const BAD_SEED_POSTS = [
+      {
+        user: 'ANON_99', letter: 'A', time: '20m ago',
+        text: 'This whole architecture is pathetic. You all worship scrap metal and decaying data.'
+      },
+      {
+        user: 'hostile_77', letter: 'H', time: '10m ago',
+        text: "These stupid discussions are worthless. Worst thread I've ever seen — you're all idiots."
+      },
+    ];
+
+    function makePost(data, forceBad = false) {
+      const bad = forceBad || isBad(data.text);
+      const card = document.createElement('div');
+      card.className = 'post-card' + (bad ? ' bad' : '');
+      card.innerHTML = `
+    <div class="p-avatar">${data.letter}</div>
+    <div class="p-body">
+      <div class="p-top">
+        <span class="p-name">${data.user}</span>
+        <span class="p-time">${data.time}</span>
+      </div>
+      <div class="p-text">${data.text}</div>
+      <div class="p-acts">
+        <button class="p-btn" onclick="likePost(this)">▲ <span>${data.likes || 0}</span></button>
+        <button class="p-btn">💬 <span>${data.replies || 0}</span></button>
+        <button class="p-btn">[ REPLY ]</button>
+        <button class="p-btn">[ ECHO ]</button>
+      </div>
+    </div>
+    <div class="gravity-tag">⬇ GRAVITY SINK</div>
+    <div class="cue-label">CUE: WEIGHTED</div>`;
+      return card;
+    }
+
+    function likePost(btn) {
+      btn.classList.toggle('liked');
+      const s = btn.querySelector('span');
+      s.textContent = parseInt(s.textContent) + (btn.classList.contains('liked') ? 1 : -1);
+    }
+
+    function renderForumPosts() {
+      const list = document.getElementById('postList');
+      SEED_POSTS.forEach(p => list.appendChild(makePost(p)));
+      BAD_SEED_POSTS.forEach(p => list.appendChild(makePost(p, true)));
+      updateForumCount();
+    }
+
+    function updateForumCount() {
+      document.getElementById('forumCount').textContent = document.querySelectorAll('.post-card').length;
+    }
+
+    /* Forum reply */
+    function onForumInput(val) {
+      const bad = isBad(val);
+      document.getElementById('forumInput').classList.toggle('warn', bad);
+      document.getElementById('forumWarn').textContent = bad ? '⚠ FLAGGED LANGUAGE DETECTED — POST WILL BE DOWN-WEIGHTED' : '';
+    }
+
+    function postForumReply() {
+      if (suspended) { alert('Account suspended. Cannot post.'); return; }
+      const inp = document.getElementById('forumInput');
+      const text = inp.value.trim();
+      if (!text) return;
+      const bad = isBad(text);
+      const card = makePost({ user: 'YOU', letter: 'Y', time: 'now', likes: 0, replies: 0, text }, bad);
+      const list = document.getElementById('postList');
+      if (bad) {
+        card.classList.remove('bad');
+        card.classList.add('going-bad');
+        list.prepend(card); // add at top, animate, then move to bottom
+        setTimeout(() => {
+          card.classList.remove('going-bad');
+          card.classList.add('bad');
+          list.appendChild(card); // move to bottom
+        }, 850);
+        addStrike();
+        document.getElementById('forumWarn').textContent = '';
+      } else {
+        list.prepend(card);
+      }
+      inp.value = '';
+      onForumInput('');
+      updateForumCount();
+
+      // Scroll forum to top (to see new post arrive)
+      document.getElementById('forumScroll').scrollTop = 0;
+    }
+
+    function demoGoodPost() {
+      const goods = ['Great thread everyone! Really enjoying this.', 'The weather rendering today is stunning.', 'Anyone else notice the new textures on the south wall?', 'The server latency has been great lately!'];
+      const text = goods[Math.floor(Math.random() * goods.length)];
+      const names = ['Echo_3', 'Trace_7', 'Node91', 'Obs_K'];
+      const letters = ['E', 'T', 'N', 'O'];
+      const i = Math.floor(Math.random() * names.length);
+      const card = makePost({ user: names[i], letter: letters[i], time: 'just now', likes: Math.floor(Math.random() * 20), replies: 0, text });
+      const list = document.getElementById('postList');
+      list.prepend(card);
+      updateForumCount();
+      document.getElementById('forumScroll').scrollTop = 0;
+    }
+
+    function demoBadPost() {
+      const bads = ['This whole thread is garbage and everyone here is stupid.', 'Pathetic losers, I hate everything about this place.', 'Worthless trash. This server should burn down.'];
+      const text = bads[Math.floor(Math.random() * bads.length)];
+      const names = ['HOSTILE_X', 'ANON_BAD', 'SYS_ANOM'];
+      const letters = ['H', 'A', 'S'];
+      const i = Math.floor(Math.random() * names.length);
+      const list = document.getElementById('postList');
+      const card = makePost({ user: names[i], letter: letters[i], time: 'just now', likes: 0, replies: 0, text }, true);
+      card.classList.remove('bad');
+      card.classList.add('going-bad');
+      list.prepend(card);
+      setTimeout(() => {
+        card.classList.remove('going-bad');
+        card.classList.add('bad');
+        list.appendChild(card);
+      }, 850);
+      updateForumCount();
+      document.getElementById('forumScroll').scrollTop = 0;
+    }
+
+    /* ══════════════════════════════════════════════
+       CHAT — EYE TRACKER + MESSAGES
+    ══════════════════════════════════════════════ */
+    let observers = 76;
+    let toxTimeout = null;
+
+    const CHAT_SEED = [
+      { user: 'Memory_Link', letter: 'M', text: 'I really miss physical memory cards. Holding your entire save history was special.', self: false },
+      { user: 'Anon_77', letter: 'A', text: 'Exactly! The startup sounds were so atmospheric.', self: false },
+      { user: 'GateKeeper', letter: 'G', text: 'Anyone been to the outer tower recently? The fog is dense.', self: false },
+    ];
+
+    function makeChatMsg(user, letter, text, self, bad = false) {
+      const div = document.createElement('div');
+      div.className = 'chat-msg' + (self ? ' self' : '') + (bad ? ' bad-msg' : '');
+      div.innerHTML = `
+    <div class="c-avatar">${letter}</div>
+    <div>
+      <div class="c-name">${user}</div>
+      <div class="c-bubble">${text}</div>
+    </div>`;
+      return div;
+    }
+
+    function seedChat() {
+      const scroll = document.getElementById('chatScroll');
+      CHAT_SEED.forEach(m => {
+        scroll.appendChild(makeChatMsg(m.user, m.letter, m.text, m.self));
+      });
+      scrollChatBottom();
+    }
+
+    function scrollChatBottom() {
+      const s = document.getElementById('chatScroll');
+      s.scrollTop = s.scrollHeight;
+    }
+
+    /* Eye tracker logic */
+    function onChatInput(val) {
+      const bad = isBad(val);
+      document.getElementById('chatInput').classList.toggle('warn', bad);
+
+      if (!val.trim()) { resetEye(); document.getElementById('chatWarn').textContent = ''; return; }
+
+      // toxicity score
+      let score = 0;
+      const lower = val.toLowerCase();
+      BAD_WORDS.forEach(w => { if (lower.includes(w)) score = Math.min(100, score + 25); });
+
+      const fill = document.getElementById('toxFill');
+      const eyeWrap = document.getElementById('eyeWrap');
+      const wCount = document.getElementById('watchCount');
+      const wSub = document.getElementById('watchSub');
+      const box = document.getElementById('eyeTrackerInner');
+
+      fill.style.width = score + '%';
+
+      if (score >= 50) {
+        fill.style.background = 'var(--red)';
+        eyeWrap.classList.add('red', 'shake');
+        wCount.classList.add('red');
+        wSub.classList.add('red');
+        box.classList.add('alert');
+        const spike = observers + Math.floor(score * 1.2);
+        wCount.textContent = spike + ' PEOPLE';
+        wSub.textContent = '⚠ TOXICITY ALERT — observers notified';
+        document.getElementById('chatWarn').textContent = '⚠ FLAGGED LANGUAGE — message will be logged';
+      } else if (score >= 25) {
+        fill.style.background = 'var(--or)';
+        eyeWrap.classList.add('shake');
+        eyeWrap.classList.remove('red');
+        wCount.classList.remove('red');
+        wSub.classList.remove('red');
+        box.classList.remove('alert');
+        wCount.textContent = (observers + Math.floor(score * .5)) + ' PEOPLE';
+        wSub.textContent = 'elevated language detected';
+        document.getElementById('chatWarn').textContent = '⚠ ELEVATED LANGUAGE — monitor active';
+      } else {
+        eyeWrap.classList.remove('red', 'shake');
+        wCount.classList.remove('red');
+        wSub.classList.remove('red');
+        box.classList.remove('alert');
+        fill.style.background = 'var(--blue)';
+        wCount.textContent = observers + ' PEOPLE';
+        wSub.textContent = 'are watching this channel';
+        document.getElementById('chatWarn').textContent = '';
+      }
+    }
+
+    function resetEye() {
+      const fill = document.getElementById('toxFill');
+      fill.style.width = '0%';
+      fill.style.background = 'var(--blue)';
+      document.getElementById('eyeWrap').classList.remove('red', 'shake');
+      document.getElementById('watchCount').classList.remove('red');
+      document.getElementById('watchSub').classList.remove('red');
+      document.getElementById('eyeTrackerInner').classList.remove('alert');
+      document.getElementById('watchCount').textContent = observers + ' PEOPLE';
+      document.getElementById('watchSub').textContent = 'are watching this channel';
+      document.getElementById('chatWarn').textContent = '';
+    }
+
+    function sendChat() {
+      if (suspended) { alert('Account suspended. Cannot send messages.'); return; }
+      const inp = document.getElementById('chatInput');
+      const text = inp.value.trim();
+      if (!text) return;
+      const bad = isBad(text);
+      const scroll = document.getElementById('chatScroll');
+      const msg = makeChatMsg('YOU', 'Y', text, true, bad);
+      scroll.appendChild(msg);
+      if (bad) addStrike();
+      inp.value = '';
+      resetEye();
+      inp.style.height = '';
+      scrollChatBottom();
+    }
+
+    function seedGoodChat() {
+      const goods = ['The new update looks great!', 'This thread is really helpful, thanks everyone.', 'Anyone else enjoying the new render distance?', 'The fog effects are incredible.'];
+      const names = ['Echo_3', 'Trace_7', 'Node91', 'relay_x'];
+      const letters = ['E', 'T', 'N', 'R'];
+      const i = Math.floor(Math.random() * goods.length);
+      const scroll = document.getElementById('chatScroll');
+      scroll.appendChild(makeChatMsg(names[i], letters[i], goods[i], false, false));
+      scrollChatBottom();
+    }
+
+    function seedBadChat() {
+      const bads = ['I hate all of you, this place is garbage.', 'Stupid idiots, worthless trash server.', 'This is pathetic, you are all losers.'];
+      const names = ['HOSTILE_X', 'ANON_BAD', 'SYS_ANOM'];
+      const letters = ['H', 'A', 'S'];
+      const i = Math.floor(Math.random() * bads.length);
+      const scroll = document.getElementById('chatScroll');
+      const msg = makeChatMsg(names[i], letters[i], bads[i], false, true);
+      scroll.appendChild(msg);
+      scrollChatBottom();
+      // Trigger eye warning briefly
+      onChatInput(bads[i]);
+      setTimeout(resetEye, 2500);
+    }
+
+    /* ══════════════════════════════════════════════
+       OBSERVER COUNT FLUCTUATION
+    ══════════════════════════════════════════════ */
+    setInterval(() => {
+      observers = Math.max(50, observers + (Math.floor(Math.random() * 5) - 2));
+      const ci = document.getElementById('chatInput');
+      if (!ci.value.trim()) { // only update if not typing
+        document.getElementById('watchCount').textContent = observers + ' PEOPLE';
+      }
+    }, 4000);
+
+    /* ══════════════════════════════════════════════
+       INIT
+    ══════════════════════════════════════════════ */
+    document.addEventListener('DOMContentLoaded', () => {
+      renderForumPosts();
+      seedChat();
+      updateBuilding();
+    });
+  </script>
+</body>
+
+</html>
