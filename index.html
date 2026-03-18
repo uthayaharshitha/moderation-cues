@@ -147,56 +147,123 @@
       align-items: center;
       gap: 1px;
       padding-bottom: 2px;
-      position: relative
+      position: relative;
+      margin-right: 6px;
+    }
+
+    .bld-parts {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1px;
+      transition: transform 0.6s ease;
+      transform-origin: bottom center;
+    }
+
+    .mb-roof {
+      width: 18px;
+      height: 2px;
+      background: #777;
+      margin-bottom: 1px;
+      border: 1px solid #333;
+      transition: all 0.6s ease;
     }
 
     .mb-floor {
-      background: linear-gradient(90deg, #555, #aaa, #555);
-      border: 1px solid #333;
-      transition: all .6s;
+      background: linear-gradient(90deg, #444, #777, #444);
+      border: 1px solid #222;
+      transition: all 0.6s ease;
+      display: flex;
+      justify-content: space-evenly;
+      align-items: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Windows */
+    .mb-floor::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(232, 100, 10, 0.4) 2px, rgba(232, 100, 10, 0.4) 4px);
+    }
+    
+    .mb-floor.dark-win::after {
+      background: repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(10, 10, 10, 0.6) 2px, rgba(10, 10, 10, 0.6) 4px);
+    }
+
+    /* Stage 2 Hairline Crack on Top Floor */
+    .mb-floor.crack-s2::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 30%;
+      width: 1px;
+      height: 100%;
+      background: #111;
+      z-index: 2;
+      transform: rotate(15deg);
     }
 
     .mb-rubble {
       display: flex;
       flex-wrap: wrap;
       gap: 1px;
-      width: 26px;
+      width: 32px;
       opacity: 0;
-      transition: opacity .5s;
+      transition: opacity 0.6s ease;
+      position: absolute;
+      bottom: 12px;
     }
 
     .mb-rubble.show {
-      opacity: 1
+      opacity: 1;
     }
 
     .mb-piece {
       background: #555;
       border: 1px solid #333;
-      animation: rubble-in .4s ease both
+      animation: rubble-fall 0.6s cubic-bezier(0.55, 0.085, 0.68, 0.53) forwards;
     }
 
-    @keyframes rubble-in {
-      from {
-        transform: translateY(-4px) rotate(0);
-        opacity: 0
-      }
+    @keyframes rubble-fall {
+      from { transform: translateY(-10px) rotate(0); opacity: 1; }
+      to { transform: translateY(15px) rotate(45deg); opacity: 0; }
+    }
 
-      to {
-        opacity: 1
-      }
+    .dust-cloud {
+      position: absolute;
+      bottom: 10px;
+      width: 40px;
+      height: 15px;
+      background: rgba(150, 150, 150, 0.5);
+      border-radius: 50%;
+      filter: blur(4px);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .dust-cloud.show {
+      animation: dust-poof 1.2s ease-out forwards;
+    }
+
+    @keyframes dust-poof {
+      0% { transform: scale(0.5) translateY(0); opacity: 0.8; }
+      100% { transform: scale(2) translateY(-10px); opacity: 0; }
     }
 
     .mb-crack {
       position: absolute;
       inset: 0;
       pointer-events: none;
-      background: repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(0, 0, 0, .3) 4px, rgba(0, 0, 0, .3) 5px);
+      background: repeating-linear-gradient(45deg, transparent, transparent 6px, rgba(0, 0, 0, .4) 6px, rgba(0, 0, 0, .4) 8px);
       opacity: 0;
-      transition: opacity .5s;
+      transition: opacity 0.6s ease;
+      z-index: 3;
     }
 
     .mb-crack.show {
-      opacity: 1
+      opacity: 1;
     }
 
     .bld-label {
@@ -204,7 +271,8 @@
       color: var(--dim);
       letter-spacing: 1px;
       text-transform: uppercase;
-      margin-top: 2px
+      margin-top: 4px;
+      transition: color 0.6s ease;
     }
 
     /* Suspended banner */
@@ -380,8 +448,8 @@
     }
 
     .post-card.bad {
-      opacity: .25;
-      filter: blur(3.5px);
+      opacity: .35;
+      filter: blur(4.5px) grayscale(60%);
       background: rgba(255, 26, 0, .04);
       border-color: rgba(255, 26, 0, .2);
       order: 999;
@@ -389,26 +457,20 @@
     }
 
     .post-card.going-bad {
-      animation: blur-sink .8s cubic-bezier(.22, .61, .36, 1) forwards
+      animation: blur-sink 2.2s ease-in forwards;
     }
 
     @keyframes blur-sink {
       0% {
         opacity: 1;
-        filter: blur(0);
-        transform: translateY(0)
-      }
-
-      60% {
-        opacity: .4;
-        filter: blur(2px);
-        transform: translateY(8px)
+        filter: blur(0) grayscale(0%);
+        transform: translateY(0);
       }
 
       100% {
-        opacity: .25;
-        filter: blur(3.5px);
-        transform: translateY(0)
+        opacity: .35;
+        filter: blur(4.5px) grayscale(60%);
+        transform: translateY(10px);
       }
     }
 
@@ -647,22 +709,45 @@
       height: 32px
     }
 
+    .eye-svg-wrap svg.eye-svg {
+      filter: drop-shadow(0 0 3px var(--green));
+      transition: filter 0.3s;
+    }
+
+    .eye-svg-wrap .eyelid-stroke {
+      stroke: var(--green);
+      transition: stroke 0.3s;
+    }
+
     .eye-svg-wrap .iris {
-      fill: #4a9eff;
-      transition: fill .3s
+      fill: var(--green);
+      transition: fill 0.3s;
     }
 
     .eye-svg-wrap .pupil {
-      fill: #05070f;
-      transition: transform .4s
+      fill: #000;
+      transform-origin: 18px 18px;
+      transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .eye-svg-wrap.red svg.eye-svg {
+      filter: drop-shadow(0 0 6px var(--red));
+    }
+
+    .eye-svg-wrap.red .eyelid-stroke {
+      stroke: var(--red);
     }
 
     .eye-svg-wrap.red .iris {
-      fill: var(--red)
+      fill: var(--red);
+    }
+
+    .eye-svg-wrap.red .pupil {
+      transform: scale(1.6);
     }
 
     .eye-svg-wrap.shake {
-      animation: eyeshake .07s infinite
+      animation: eyeshake .05s infinite
     }
 
     @keyframes eyeshake {
@@ -673,20 +758,44 @@
       }
 
       20% {
-        transform: translate(-3px, 1px)
+        transform: translate(-6px, 2px)
       }
 
       40% {
-        transform: translate(3px, -2px)
+        transform: translate(6px, -4px)
       }
 
       60% {
-        transform: translate(-2px, -1px)
+        transform: translate(-4px, -2px)
       }
 
       80% {
-        transform: translate(1px, 2px)
+        transform: translate(2px, 4px)
       }
+    }
+
+    #pulseContainer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .pulse-ring {
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 2px solid var(--red);
+      opacity: 0;
+      animation: expandPulse 0.5s ease-out forwards;
+    }
+
+    @keyframes expandPulse {
+      0% { transform: scale(1); opacity: 0.8; }
+      100% { transform: scale(3.5); opacity: 0; }
     }
 
     /* Floating "being watched" bubble */
@@ -747,18 +856,18 @@
     .tox-fill {
       height: 100%;
       width: 0%;
-      background: var(--blue);
-      transition: width .35s, background .35s
+      background-color: var(--green);
+      transition: width 0.4s ease, background-color 0.4s ease;
     }
 
     /* Chat messages */
     .chat-scroll {
       flex: 1;
       overflow-y: auto;
-      padding: 8px 12px;
+      padding: 12px 14px;
       display: flex;
       flex-direction: column;
-      gap: 8px
+      gap: 14px;
     }
 
     .chat-scroll::-webkit-scrollbar {
@@ -795,52 +904,84 @@
 
     .c-bubble {
       max-width: 240px;
-      background: var(--bg3);
-      border: 1px solid var(--border2);
-      padding: 6px 9px;
+      padding: 10px 12px;
       font-size: 10px;
       line-height: 1.55;
       color: var(--white);
+      position: relative;
+    }
+
+    .chat-msg:not(.self) .c-bubble {
+      background: var(--bg2);
+      border: 1px solid var(--border2);
+      border-left: 2px solid var(--green);
     }
 
     .chat-msg.self .c-bubble {
-      border-color: var(--or);
-      background: rgba(232, 100, 10, .08)
+      background: var(--bg4);
+      border: 1px solid var(--border2);
+      border-left: 2px solid var(--or);
     }
 
     .c-name {
       font-size: 7px;
       color: var(--dim);
-      margin-bottom: 2px;
-      letter-spacing: 1px
+      margin-bottom: 4px;
+      letter-spacing: 1px;
     }
 
     .chat-msg.self .c-name {
       text-align: right;
-      color: var(--or)
+      color: var(--or);
     }
 
     /* Chat bad message */
     .chat-msg.bad-msg .c-bubble {
-      border-color: var(--red2);
-      color: rgba(255, 255, 255, .4);
-      animation: chat-warn .5s ease
+      border: 1px solid var(--red2);
+      border-left: 2px solid var(--red);
+      color: rgba(255, 255, 255, .7);
+      animation: chat-warn-fade 0.3s ease forwards, red-pulse 0.6s ease-out;
     }
 
-    @keyframes chat-warn {
-      0% {
-        border-color: var(--red);
-        box-shadow: 0 0 8px var(--red)
-      }
+    @keyframes chat-warn-fade {
+      0% { background: var(--bg2); }
+      100% { background: rgba(255, 0, 0, 0.08); }
+    }
 
+    @keyframes red-pulse {
+      0% {
+        background: rgba(255, 0, 0, 0.4);
+        box-shadow: 0 0 12px var(--red);
+        border-color: var(--red);
+      }
       100% {
+        background: rgba(255, 0, 0, 0.08);
+        box-shadow: none;
         border-color: var(--red2);
-        box-shadow: none
       }
     }
 
     .chat-msg.bad-msg .c-name {
-      color: var(--red)
+      color: var(--red);
+    }
+    
+    .flagged-badge {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      background: var(--red);
+      color: #000;
+      font-size: 6px;
+      font-weight: 700;
+      padding: 2px 4px;
+      letter-spacing: 1px;
+      opacity: 0;
+      animation: fade-badge 0.3s ease 0.3s forwards;
+      pointer-events: none;
+    }
+
+    @keyframes fade-badge {
+      to { opacity: 1; }
     }
 
     /* Chat input row */
@@ -1256,12 +1397,16 @@
       <!-- User chip: avatar + building side by side -->
       <div class="user-chip">
         <div class="mini-bld" id="miniBld" title="Account integrity">
-          <div class="mb-crack" id="mbCrack"></div>
-          <div class="mb-floor" id="mf4" style="width:22px;height:5px"></div>
-          <div class="mb-floor" id="mf3" style="width:24px;height:5px"></div>
-          <div class="mb-floor" id="mf2" style="width:26px;height:5px"></div>
-          <div class="mb-floor" id="mf1" style="width:28px;height:5px"></div>
+          <div class="bld-parts" id="bldParts">
+            <div class="mb-roof" id="mRoof"></div>
+            <div class="mb-crack" id="mbCrack"></div>
+            <div class="mb-floor" id="mf4" style="width:22px;height:8px"></div>
+            <div class="mb-floor" id="mf3" style="width:24px;height:8px"></div>
+            <div class="mb-floor" id="mf2" style="width:26px;height:8px"></div>
+            <div class="mb-floor" id="mf1" style="width:28px;height:8px"></div>
+          </div>
           <div class="mb-rubble" id="mbRubble"></div>
+          <div class="dust-cloud" id="dustCloud"></div>
           <div class="bld-label" id="bldLabel">INTEGRITY</div>
         </div>
         <div class="u-avatar" id="uAvatar" title="Your profile">Y</div>
@@ -1324,12 +1469,13 @@
         <div class="eye-tracker-inner" id="eyeTrackerInner">
           <!-- Eye -->
           <div class="eye-svg-wrap" id="eyeWrap">
-            <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <ellipse cx="18" cy="18" rx="15" ry="9" stroke="#2e1f55" stroke-width="2" />
-              <circle cx="18" cy="18" r="6" class="iris" />
+            <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" class="eye-svg">
+              <path d="M 3 18 Q 18 6 33 18 Q 18 30 3 18 Z" fill="#0f0a1a" stroke-width="1.5" class="eyelid-stroke" />
+              <circle cx="18" cy="18" r="6.5" class="iris" />
               <circle cx="18" cy="18" r="2.5" class="pupil" />
-              <ellipse cx="18" cy="18" rx="15" ry="9" stroke="#1a1040" stroke-width="1" opacity=".6" />
+              <path d="M 15 14 Q 18 12 21 14" stroke="rgba(255,255,255,0.4)" stroke-width="1" fill="none" stroke-linecap="round" />
             </svg>
+            <div id="pulseContainer"></div>
           </div>
           <!-- Watch count bubble -->
           <div class="watch-bubble">
@@ -1420,36 +1566,85 @@
     }
 
     function updateBuilding() {
-      const floors = FLOORS.slice(0, MAX_STRIKES - strikes); // floors remaining
-      FLOORS.forEach((id, i) => {
-        const f = document.getElementById(id);
-        if (!f) return;
-        const visible = i < (MAX_STRIKES - strikes);
-        f.style.opacity = visible ? 1 : 0;
-        f.style.transform = visible ? 'none' : 'scaleY(0)';
-      });
-      // Show crack overlay at high damage
+      const parts = document.getElementById('bldParts');
+      const roof = document.getElementById('mRoof');
+      const f4 = document.getElementById('mf4');
+      const f3 = document.getElementById('mf3');
       const crack = document.getElementById('mbCrack');
-      crack.classList.toggle('show', strikes >= 2);
-      // Rubble
       const rubble = document.getElementById('mbRubble');
-      if (strikes >= 3) {
-        rubble.classList.add('show');
-        if (rubble.children.length === 0) {
-          for (let i = 0; i < 6; i++) {
-            const p = document.createElement('div');
-            p.className = 'mb-piece';
-            const s = Math.random() * 5 + 3;
-            p.style.cssText = `width:${s}px;height:${s * 0.4}px;animation-delay:${(i * .07).toFixed(2)}s;transform:rotate(${Math.random() * 30 - 15}deg)`;
-            rubble.appendChild(p);
-          }
-        }
-      } else {
-        rubble.classList.remove('show');
-        rubble.innerHTML = '';
+      const dust = document.getElementById('dustCloud');
+
+      // Reset stages
+      f4.classList.remove('crack-s2', 'dark-win');
+      f3.classList.remove('dark-win');
+      parts.style.transform = 'none';
+      crack.classList.remove('show');
+      rubble.classList.remove('show');
+      dust.classList.remove('show');
+      
+      // Stage 1: Clean (strikes = 0)
+      if (strikes === 0) {
+        FLOORS.forEach(id => {
+            const f = document.getElementById(id);
+            if (f) {
+                f.style.opacity = 1;
+                f.style.transform = 'none';
+                f.classList.remove('dark-win');
+            }
+        });
+        roof.style.opacity = 1;
+        roof.style.transform = 'none';
       }
+
+      // Stage 2: Hairline crack
+      if (strikes === 1) {
+        f4.classList.add('crack-s2');
+      }
+
+      // Stage 3: Diagonal crack + lean
+      if (strikes === 2) {
+        crack.classList.add('show');
+        parts.style.transform = 'rotate(-1deg)';
+        f4.classList.add('dark-win');
+      }
+
+      // Stage 4: Rubble chunks + top floor collapse
+      if (strikes === 3 || strikes === 4) {
+        crack.classList.add('show');
+        parts.style.transform = 'rotate(-2deg)';
+        roof.style.opacity = 0;
+        f4.style.opacity = 0;
+        f4.style.transform = 'scaleY(0)';
+        f3.classList.add('dark-win');
+        
+        rubble.classList.add('show');
+        rubble.innerHTML = '';
+        for (let i = 0; i < 6; i++) {
+          const p = document.createElement('div');
+          p.className = 'mb-piece';
+          const s = Math.random() * 5 + 3;
+          p.style.cssText = `width:${s}px;height:${s * 0.4}px;animation-delay:${(i * .05).toFixed(2)}s;transform:rotate(${Math.random() * 30 - 15}deg)`;
+          rubble.appendChild(p);
+        }
+      }
+
+      // Stage 5: Full flatten + dust cloud
+      if (strikes >= 5) {
+        roof.style.opacity = 0;
+        roof.style.transform = 'scaleY(0)';
+        FLOORS.forEach(id => {
+          const f = document.getElementById(id);
+          if (f) {
+            f.style.opacity = 0;
+            f.style.transform = 'scaleY(0)';
+          }
+        });
+        dust.classList.add('show');
+        parts.style.transform = 'scaleY(0)';
+      }
+
       // Label
-      const pct = Math.round(((MAX_STRIKES - strikes) / MAX_STRIKES) * 100);
+      const pct = Math.max(0, Math.round(((MAX_STRIKES - strikes) / MAX_STRIKES) * 100));
       document.getElementById('bldLabel').textContent = strikes === 0 ? 'INTEGRITY' : `${pct}%`;
       document.getElementById('bldLabel').style.color = strikes >= 4 ? 'var(--red)' : strikes >= 2 ? 'var(--or)' : 'var(--dim)';
     }
@@ -1587,7 +1782,7 @@
           card.classList.remove('going-bad');
           card.classList.add('bad');
           list.appendChild(card); // move to bottom
-        }, 850);
+        }, 2200);
         addStrike();
         document.getElementById('forumWarn').textContent = '';
       } else {
@@ -1629,7 +1824,7 @@
         card.classList.remove('going-bad');
         card.classList.add('bad');
         list.appendChild(card);
-      }, 850);
+      }, 2200);
       updateForumCount();
       document.getElementById('forumScroll').scrollTop = 0;
     }
@@ -1649,11 +1844,12 @@
     function makeChatMsg(user, letter, text, self, bad = false) {
       const div = document.createElement('div');
       div.className = 'chat-msg' + (self ? ' self' : '') + (bad ? ' bad-msg' : '');
+      const badge = bad ? `<div class="flagged-badge">⚠ FLAGGED</div>` : '';
       div.innerHTML = `
     <div class="c-avatar">${letter}</div>
-    <div>
+    <div style="display:flex; flex-direction:column; max-width:85%;">
       <div class="c-name">${user}</div>
-      <div class="c-bubble">${text}</div>
+      <div class="c-bubble">${text}${badge}</div>
     </div>`;
       return div;
     }
@@ -1678,6 +1874,17 @@
 
       if (!val.trim()) { resetEye(); document.getElementById('chatWarn').textContent = ''; return; }
 
+      // Pulse ring on any toxic keystroke
+      if (bad) {
+        const pCont = document.getElementById('pulseContainer');
+        if (pCont) {
+            const ring = document.createElement('div');
+            ring.className = 'pulse-ring';
+            pCont.appendChild(ring);
+            setTimeout(() => ring.remove(), 500);
+        }
+      }
+
       // toxicity score
       let score = 0;
       const lower = val.toLowerCase();
@@ -1692,7 +1899,7 @@
       fill.style.width = score + '%';
 
       if (score >= 50) {
-        fill.style.background = 'var(--red)';
+        fill.style.backgroundColor = 'var(--red)';
         eyeWrap.classList.add('red', 'shake');
         wCount.classList.add('red');
         wSub.classList.add('red');
@@ -1702,7 +1909,7 @@
         wSub.textContent = '⚠ TOXICITY ALERT — observers notified';
         document.getElementById('chatWarn').textContent = '⚠ FLAGGED LANGUAGE — message will be logged';
       } else if (score >= 25) {
-        fill.style.background = 'var(--or)';
+        fill.style.backgroundColor = 'var(--or)';
         eyeWrap.classList.add('shake');
         eyeWrap.classList.remove('red');
         wCount.classList.remove('red');
@@ -1716,7 +1923,7 @@
         wCount.classList.remove('red');
         wSub.classList.remove('red');
         box.classList.remove('alert');
-        fill.style.background = 'var(--blue)';
+        fill.style.backgroundColor = 'var(--green)';
         wCount.textContent = observers + ' PEOPLE';
         wSub.textContent = 'are watching this channel';
         document.getElementById('chatWarn').textContent = '';
@@ -1726,7 +1933,7 @@
     function resetEye() {
       const fill = document.getElementById('toxFill');
       fill.style.width = '0%';
-      fill.style.background = 'var(--blue)';
+      fill.style.backgroundColor = 'var(--green)';
       document.getElementById('eyeWrap').classList.remove('red', 'shake');
       document.getElementById('watchCount').classList.remove('red');
       document.getElementById('watchSub').classList.remove('red');
